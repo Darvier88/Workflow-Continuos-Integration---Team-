@@ -1,0 +1,20 @@
+{
+  "books": [
+    {"code": "B001", "title": "Project Hail Mary"},
+    {"code": "B002", "title": "Fundamentos de Programación en Python"},
+    {"code": "B003", "title": "The Boys, Vol. 1"},
+    {"code": "B004", "title": "Ergonomía y Riesgos Biomecánicos"},
+    {"code": "B005", "title": "Clean Code"}
+  ],
+  "members": [
+    {"id": "M001", "name": "Jorge Bravo"},
+    {"id": "M002", "name": "Usuario de Prueba"},
+    {"id": "M003", "name": "Darwin Pacheco"}
+  ],
+  "loans": [
+    {"book_code": "B001", "member_id": "M001", "due_date": "2026-05-20"},
+    {"book_code": "B002", "member_id": "M001", "due_date": "2026-05-30"},
+    {"book_code": "B003", "member_id": "M002", "due_date": "2026-06-10"},
+    {"book_code": "B004", "member_id": "M003", "due_date": "2026-12-31"}
+  ]
+}
