@@ -2,7 +2,6 @@ import json
 import os
 import argparse
 
-# Cambiado a store.json
 DATA_FILE = "store.json"
 
 def load_data():
