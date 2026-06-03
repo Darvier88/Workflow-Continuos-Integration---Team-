@@ -5,45 +5,87 @@ import argparse
 DATA_FILE = "store.json"
 
 def load_data():
-    """Carga los datos del archivo JSON. Si no existe, devuelve la estructura inicial."""
     if not os.path.exists(DATA_FILE):
         return {"books": {}, "members": {}, "loans": {}}
-    
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_data(data):
-    """Guarda los datos en el archivo JSON."""
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
 def register_book(title: str, book_code: str):
-    """
-    Registra un libro en el catálogo con un título y un código único.
-    """
+    """Registra un libro en el catálogo."""
     data = load_data()
-    
     if book_code in data["books"]:
-        raise ValueError(f"Error: El libro con el código '{book_code}' ya existe en el catálogo.")
-    
-    data["books"][book_code] = {
-        "title": title,
-        "status": "available"
-    }
-    
+        raise ValueError(f"Error: El libro con código '{book_code}' ya existe.")
+    data["books"][book_code] = {"title": title, "status": "available"}
     save_data(data)
     return f"Éxito: Libro '{title}' (Código: {book_code}) registrado."
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CaféLibro Gestor de Préstamos")
-    parser.add_argument("--add-book", nargs=2, metavar=("TITULO", "CODIGO"), help="Registrar un nuevo libro")
-    
-    args = parser.parse_args()
-    
-    if args.add_book:
-        title, code = args.add_book
+def return_book(book_id, filepath="library_data.json"):
+    """Devuelve un libro y lo marca como disponible."""
+    with open(filepath, 'r') as file:
+        data = json.load(file)
+    if book_id in data.get("active_loans", {}):
+        del data["active_loans"][book_id]
+        for book in data.get("books", []):
+            if book["id"] == book_id:
+                book["available"] = True
+                break
+        with open(filepath, 'w') as file:
+            json.dump(data, file, indent=4)
+        return True
+    else:
+        raise ValueError("El libro no está prestado actualmente.")
+
+def list_member_loans(member_id: str, db_path: str = "store.json") -> str:
+    """Lista los préstamos activos de un miembro."""
+    if not os.path.exists(db_path):
+        return f"Error: No se encontró el archivo '{db_path}'."
+    with open(db_path, 'r', encoding='utf-8') as file:
         try:
-            resultado = register_book(title, code)
-            print(resultado)
+            data = json.load(file)
+        except json.JSONDecodeError:
+            return f"Error: El archivo '{db_path}' está corrupto."
+    members = data.get("members", [])
+    if not any(m.get("id") == member_id for m in members):
+        return f"Error: El miembro '{member_id}' no está registrado."
+    active_loans = [l for l in data.get("loans", []) if l.get("member_id") == member_id]
+    if not active_loans:
+        return f"El miembro '{member_id}' no tiene préstamos activos."
+    books = data.get("books", [])
+    lines = [f"Préstamos activos para '{member_id}':"]
+    for loan in active_loans:
+        code = loan.get("book_code")
+        book = next((b for b in books if b.get("code") == code), None)
+        lines.append(f"- {book.get('title') if book else '[No encontrado]'} (Código: {code})")
+    return "\n".join(lines)
+
+def main():
+    parser = argparse.ArgumentParser(description="CaféLibro - Gestión de Préstamos")
+    subparsers = parser.add_subparsers(dest="command")
+
+    # Subcomando: add-book
+    add_parser = subparsers.add_parser("add-book", help="Registrar un nuevo libro")
+    add_parser.add_argument("title", type=str)
+    add_parser.add_argument("code", type=str)
+
+    # Subcomando: list-loans
+    list_parser = subparsers.add_parser("list-loans", help="Ver préstamos de un miembro")
+    list_parser.add_argument("member_id", type=str)
+
+    args = parser.parse_args()
+
+    if args.command == "add-book":
+        try:
+            print(register_book(args.title, args.code))
         except ValueError as e:
             print(e)
+    elif args.command == "list-loans":
+        print(list_member_loans(args.member_id))
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()
