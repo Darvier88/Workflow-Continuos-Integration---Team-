@@ -1,1 +1,70 @@
+import json
+import os
+import argparse
 
+def list_member_loans(member_id: str, db_path: str = "store.json") -> str:
+    
+    if not os.path.exists(db_path):
+        return f"Error: No se encontró el archivo de base de datos '{db_path}'."
+
+    with open(db_path, 'r', encoding='utf-8') as file:
+        try:
+            data = json.load(file)
+        except json.JSONDecodeError:
+            return f"Error: El archivo '{db_path}' está corrupto o no es un JSON válido."
+
+    members = data.get("members", [])
+    if not any(m.get("id") == member_id for m in members):
+        return f"Error: El miembro con ID '{member_id}' no está registrado en el sistema."
+
+    active_loans = [loan for loan in data.get("loans", []) if loan.get("member_id") == member_id]
+
+    if not active_loans:
+        return f"El miembro '{member_id}' no tiene libros en préstamo actualmente."
+
+    books = data.get("books", [])
+    result_lines = [f"Libros actualmente en préstamo para el miembro '{member_id}':"]
+    
+    for loan in active_loans:
+        book_code = loan.get("book_code")
+        book = next((b for b in books if b.get("code") == book_code), None)
+        
+        if book:
+            result_lines.append(f"- {book.get('title')} (Código: {book_code})")
+        else:
+            result_lines.append(f"- [Libro no encontrado en el catálogo] (Código: {book_code})")
+
+    return "\n".join(result_lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="CaféLibro - Sistema de Gestión de Préstamos",
+        epilog="Ejecuta 'python main.py <comando> -h' para más detalles de cada comando."
+    )
+    
+    subparsers = parser.add_subparsers(dest="command", help="Comandos disponibles")
+    
+    list_parser = subparsers.add_parser(
+        "list-loans", 
+        help="Muestra los libros que un miembro tiene actualmente en préstamo."
+    )
+    list_parser.add_argument(
+        "member_id", 
+        type=str, 
+        help="El ID único del miembro (ej. M001)"
+    )
+
+    args = parser.parse_args()
+
+    if args.command == "list-loans":
+        resultado = list_member_loans(args.member_id)
+        print(resultado)
+        
+    elif args.command is None:
+        parser.print_help()
+    else:
+        print("Error: Comando no reconocido o aún no implementado.")
+
+if __name__ == "__main__":
+    main()
