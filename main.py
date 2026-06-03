@@ -18,7 +18,7 @@ def register_book(title: str, book_code: str):
     """Registra un libro en el catálogo."""
     data = load_data()
     if book_code in data["books"]:
-        raise ValueError(f"Error: El libro con código '{book_code}' ya existe.")
+        raise ValueError(f"Error: El libro con código '{book_code}' ya existe en el catálogo.")
     data["books"][book_code] = {"title": title, "status": "available"}
     save_data(data)
     return f"Éxito: Libro '{title}' (Código: {book_code}) registrado."
@@ -42,7 +42,7 @@ def return_book(book_id, filepath="library_data.json"):
 def list_member_loans(member_id: str, db_path: str = "store.json") -> str:
     """Lista los préstamos activos de un miembro."""
     if not os.path.exists(db_path):
-        return f"Error: No se encontró el archivo '{db_path}'."
+        return f"Error: No se encontró el archivo de base de datos '{db_path}'."
     with open(db_path, 'r', encoding='utf-8') as file:
         try:
             data = json.load(file)
@@ -50,10 +50,10 @@ def list_member_loans(member_id: str, db_path: str = "store.json") -> str:
             return f"Error: El archivo '{db_path}' está corrupto."
     members = data.get("members", [])
     if not any(m.get("id") == member_id for m in members):
-        return f"Error: El miembro '{member_id}' no está registrado."
+        return f"Error: El miembro '{member_id}' no está registrado en el sistema."
     active_loans = [l for l in data.get("loans", []) if l.get("member_id") == member_id]
     if not active_loans:
-        return f"El miembro '{member_id}' no tiene préstamos activos."
+        return f"El miembro '{member_id}' no tiene libros en préstamo actualmente."
     books = data.get("books", [])
     lines = [f"Préstamos activos para '{member_id}':"]
     for loan in active_loans:
