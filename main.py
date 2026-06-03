@@ -106,11 +106,8 @@ def main():
         print(resultado)
     elif args.command == "overdue":
         cmd_overdue()
-        
-    elif args.command is None:
-        parser.print_help()
     else:
-        print("Error: Comando no reconocido o aún no implementado.")
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
