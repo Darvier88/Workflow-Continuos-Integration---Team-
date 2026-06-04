@@ -1,4 +1,4 @@
-"""CaféLibro CLI entry point and legacy feature helpers."""
+"""CaféLibro CLI entry point and feature helper functions."""
 import argparse
 import json
 import os
@@ -31,8 +31,10 @@ def register_book(title: str, book_code: str):
     return f"Éxito: Libro '{title}' (Código: {book_code}) registrado."
 
 
-def return_book(book_id, filepath="library_data.json"):
+def return_book(book_id, filepath=None):
     """Devuelve un libro y lo marca como disponible."""
+    if filepath is None:
+        filepath = DATA_FILE
     with open(filepath, "r", encoding="utf-8") as file:
         data = json.load(file)
     if book_id in data.get("active_loans", {}):
