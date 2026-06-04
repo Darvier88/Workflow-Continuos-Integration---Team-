@@ -1,5 +1,10 @@
 {
-    "members": [],
-    "books": [],
-    "loans": []
+    "books": {
+        "NOV-001": {
+            "title": "Cien a\u00f1os de soledad",
+            "status": "available"
+        }
+    },
+    "members": {},
+    "loans": {}
 }
