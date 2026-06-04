@@ -14,9 +14,7 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
@@ -37,3 +35,35 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # necesario para crear el tag/release
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Empaquetar
+      run: |
+        if [ -f pyproject.toml ] || [ -f setup.py ]; then
+          pip install build
+          python -m build           # genera dist/*.whl y *.tar.gz
+        else
+          mkdir -p dist
+          zip -r dist/cafelibro.zip . -x '.git/*' '.github/*'
+        fi
+    - name: Subir artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cafelibro-paquete
+        path: dist/*
+    - name: Crear tag y release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        files: dist/*
