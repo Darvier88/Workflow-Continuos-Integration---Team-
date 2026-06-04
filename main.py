@@ -11,7 +11,7 @@ DATA_FILE = "store.json"
 
 def load_data():
     if not os.path.exists(DATA_FILE):
-        return {"books": {}, "members": {}, "loans": {}}
+        return {"books": {}, "members": [], "loans": []}
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -31,18 +31,21 @@ def register_book(title: str, book_code: str):
     return f"Éxito: Libro '{title}' (Código: {book_code}) registrado."
 
 
-def return_book(book_id, filepath=None):
+def return_book(book_id, filepath=DATA_FILE):
     """Devuelve un libro y lo marca como disponible."""
-    if filepath is None:
-        filepath = DATA_FILE
     with open(filepath, "r", encoding="utf-8") as file:
         data = json.load(file)
     if book_id in data.get("active_loans", {}):
         del data["active_loans"][book_id]
-        for book in data.get("books", []):
-            if book["id"] == book_id:
-                book["available"] = True
-                break
+        books = data.get("books", [])
+        if isinstance(books, dict):
+            if book_id in books:
+                books[book_id]["status"] = "available"
+        else:
+            for book in books:
+                if book["id"] == book_id:
+                    book["available"] = True
+                    break
         with open(filepath, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
         return True
@@ -61,7 +64,9 @@ def list_member_loans(member_id: str, db_path: str = "store.json") -> str:
     members = data.get("members", [])
     if not any(m.get("id") == member_id for m in members):
         return f"Error: El miembro '{member_id}' no está registrado en el sistema."
-    active_loans = [l for l in data.get("loans", []) if l.get("member_id") == member_id]
+    active_loans = [
+        loan for loan in data.get("loans", []) if loan.get("member_id") == member_id
+    ]
     if not active_loans:
         return f"El miembro '{member_id}' no tiene libros en préstamo actualmente."
     books = data.get("books", [])
